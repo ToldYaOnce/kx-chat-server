@@ -1,0 +1,56 @@
+{
+  "name": "@toldyaonce/kxgen-chat-server",
+  "version": "1.0.0",
+  "description": "Reusable CDK construct for KXGen real-time chat server infrastructure",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "aws",
+    "cdk",
+    "websocket",
+    "chat",
+    "real-time",
+    "lambda",
+    "dynamodb",
+    "sns"
+  ],
+  "author": "ToldYaOnce",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toldyaonce/kxgen-chat-server.git"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.3.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.450.0",
+    "@aws-sdk/client-dynamodb": "^3.450.0",
+    "@aws-sdk/lib-dynamodb": "^3.450.0",
+    "@aws-sdk/client-sns": "^3.450.0",
+    "uuid": "^9.0.1",
+    "dayjs": "^1.11.10"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "@types/node": "^20.8.0",
+    "@types/uuid": "^9.0.7",
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.3.0",
+    "typescript": "^5.2.2",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.6"
+  },
+  "files": [
+    "lib/**/*",
+    "README.md"
+  ]
+}
