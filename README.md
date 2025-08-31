@@ -121,28 +121,21 @@ sequenceDiagram
 ### Database Schema
 
 ```mermaid
-erDiagram
-    MESSAGES {
-        string threadId PK
-        number timestamp SK
-        string messageId
-        string messageType
-        string text
-        string sender
-        string status
-        string metadata
-        number expiresAt
-    }
+graph TB
+    subgraph "DynamoDB Tables"
+        subgraph "Messages Table"
+            M1["🔑 threadId (PK)<br/>🔑 timestamp (SK)<br/>📝 messageId<br/>📝 messageType<br/>📝 text<br/>📝 sender<br/>📝 status<br/>📝 metadata<br/>⏰ expiresAt (TTL)"]
+        end
+        
+        subgraph "Connections Table"
+            C1["🔑 userId (PK)<br/>📝 connectionId<br/>📝 threadId<br/>📝 lastSeen<br/>📝 isHumanOverride"]
+        end
+    end
     
-    CONNECTIONS {
-        string userId PK
-        string connectionId
-        string threadId
-        number lastSeen
-        boolean isHumanOverride
-    }
+    M1 -.->|"linked by threadId"| C1
     
-    MESSAGES }|--|| CONNECTIONS : "linked by threadId"
+    style M1 fill:#e3f2fd
+    style C1 fill:#f3e5f5
 ```
 
 ### AWS Infrastructure Components
