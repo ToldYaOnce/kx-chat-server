@@ -1,4 +1,4 @@
-import { App, Construct } from 'constructs';
+import { Construct } from 'constructs';
 import { ChatInfraStack } from './stack';
 import { ChatStackProps } from './types';
 

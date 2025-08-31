@@ -39,6 +39,171 @@ const chatStack = createChatInfraStack(app, 'MyKXGenChatStack', {
 
 ## Architecture
 
+### High-Level Architecture
+
+```mermaid
+graph TB
+    Client[Client WebSocket Connection] --> WSAPI[WebSocket API Gateway]
+    
+    WSAPI --> ConnectLambda[Connect Lambda]
+    WSAPI --> DisconnectLambda[Disconnect Lambda]
+    WSAPI --> MessageSendLambda[MessageSend Lambda]
+    
+    ConnectLambda --> ConnectionsTable[Connections Table<br/>DynamoDB]
+    DisconnectLambda --> ConnectionsTable
+    MessageSendLambda --> ConnectionsTable
+    MessageSendLambda --> MessagesTable[Messages Table<br/>DynamoDB]
+    MessageSendLambda --> SNSTopic[SNS Topic<br/>Bot Responder]
+    
+    SNSTopic --> BotLambda[Bot Responder Lambda<br/>External]
+    BotLambda --> PostToConnectionLambda[PostToConnection Lambda]
+    PostToConnectionLambda --> ConnectionsTable
+    PostToConnectionLambda --> MessagesTable
+    PostToConnectionLambda --> WSAPI
+    
+    WSAPI --> Client
+    
+    style Client fill:#e1f5fe
+    style WSAPI fill:#f3e5f5
+    style ConnectLambda fill:#fff3e0
+    style DisconnectLambda fill:#fff3e0
+    style MessageSendLambda fill:#fff3e0
+    style PostToConnectionLambda fill:#fff3e0
+    style ConnectionsTable fill:#e8f5e8
+    style MessagesTable fill:#e8f5e8
+    style SNSTopic fill:#fce4ec
+    style BotLambda fill:#f1f8e9
+```
+
+### Data Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant WS as WebSocket API
+    participant CL as Connect Lambda
+    participant ML as MessageSend Lambda
+    participant CT as Connections Table
+    participant MT as Messages Table
+    participant SNS as SNS Topic
+    participant BL as Bot Lambda
+    participant PL as PostToConnection Lambda
+
+    Note over C,PL: Connection Flow
+    C->>WS: Connect with userId & threadId
+    WS->>CL: $connect route
+    CL->>CT: Store connection info
+    CL-->>C: Connection established
+
+    Note over C,PL: Message Send Flow
+    C->>WS: Send message
+    WS->>ML: message.send route
+    ML->>CT: Get connection info
+    ML->>MT: Store message with TTL
+    ML->>SNS: Publish message for bots
+    ML-->>C: Message sent confirmation
+
+    Note over C,PL: Bot Response Flow
+    SNS->>BL: Notify bot responder
+    BL->>BL: Process message with AI
+    BL->>PL: Send response via API
+    PL->>CT: Lookup connectionId
+    PL->>MT: Store bot message
+    PL->>WS: Post to connection
+    WS-->>C: Receive bot response
+
+    Note over C,PL: Disconnect Flow
+    C->>WS: Disconnect
+    WS->>DisconnectLambda: $disconnect route
+    DisconnectLambda->>CT: Remove connection
+```
+
+### Database Schema
+
+```mermaid
+erDiagram
+    MESSAGES {
+        string threadId PK
+        number timestamp SK
+        string messageId
+        string messageType
+        string text
+        string sender
+        string status
+        object metadata
+        number expiresAt
+    }
+    
+    CONNECTIONS {
+        string userId PK
+        string connectionId
+        string threadId
+        number lastSeen
+        boolean isHumanOverride
+    }
+    
+    MESSAGES ||--o{ CONNECTIONS : "threadId"
+```
+
+### AWS Infrastructure Components
+
+```mermaid
+graph LR
+    subgraph "API Gateway"
+        WSAPI[WebSocket API<br/>wss://api-id.execute-api.region.amazonaws.com]
+        Stage[Stage: prod<br/>Auto Deploy]
+    end
+    
+    subgraph "Lambda Functions"
+        ConnectFn[Connect Function<br/>Node.js 18.x]
+        DisconnectFn[Disconnect Function<br/>Node.js 18.x]
+        MessageSendFn[MessageSend Function<br/>Node.js 18.x]
+        PostToConnFn[PostToConnection Function<br/>Node.js 18.x]
+    end
+    
+    subgraph "DynamoDB"
+        MessagesDB[Messages Table<br/>Partition: threadId<br/>Sort: timestamp<br/>TTL: expiresAt]
+        ConnectionsDB[Connections Table<br/>Partition: userId<br/>Point-in-time Recovery]
+    end
+    
+    subgraph "SNS"
+        Topic[Responder Topic<br/>Fan-out to subscribers]
+    end
+    
+    subgraph "IAM Permissions"
+        LambdaRole[Lambda Execution Roles<br/>DynamoDB Read/Write<br/>SNS Publish<br/>API Gateway PostToConnection]
+    end
+    
+    WSAPI --> Stage
+    Stage --> ConnectFn
+    Stage --> DisconnectFn  
+    Stage --> MessageSendFn
+    
+    ConnectFn --> ConnectionsDB
+    DisconnectFn --> ConnectionsDB
+    MessageSendFn --> ConnectionsDB
+    MessageSendFn --> MessagesDB
+    MessageSendFn --> Topic
+    PostToConnFn --> ConnectionsDB
+    PostToConnFn --> MessagesDB
+    PostToConnFn --> Stage
+    
+    LambdaRole --> ConnectFn
+    LambdaRole --> DisconnectFn
+    LambdaRole --> MessageSendFn
+    LambdaRole --> PostToConnFn
+    
+    style WSAPI fill:#ff9800
+    style ConnectFn fill:#4caf50
+    style DisconnectFn fill:#4caf50
+    style MessageSendFn fill:#4caf50
+    style PostToConnFn fill:#4caf50
+    style MessagesDB fill:#2196f3
+    style ConnectionsDB fill:#2196f3
+    style Topic fill:#e91e63
+    style LambdaRole fill:#9c27b0
+```
+
 ### WebSocket API Routes
 
 - **$connect** - Establishes connection, requires `userId` and `threadId` query parameters

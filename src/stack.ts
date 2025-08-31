@@ -1,4 +1,4 @@
-import { Stack, StackProps, Duration } from 'aws-cdk-lib';
+import { Stack, Duration } from 'aws-cdk-lib';
 import { WebSocketApi, WebSocketStage } from 'aws-cdk-lib/aws-apigatewayv2';
 import { WebSocketLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { Function, Runtime, Code } from 'aws-cdk-lib/aws-lambda';
@@ -23,7 +23,7 @@ export class ChatInfraStack extends Stack {
   constructor(scope: Construct, id: string, props: ChatStackProps) {
     super(scope, id, props);
 
-    const { domain, snsTopicName, messageRetentionDays = 90 } = props;
+    const { snsTopicName, messageRetentionDays = 90 } = props;
 
     // Create DynamoDB tables
     this.messagesTable = createMessagesTable(this, messageRetentionDays);

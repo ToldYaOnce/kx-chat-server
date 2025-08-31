@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { Connection, WebSocketEvent } from '../types';
+import { Connection } from '../types';
 
 const dynamoClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
@@ -23,7 +23,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const connection: Connection = {
       userId,
-      connectionId,
+      connectionId: connectionId!,
       threadId,
       lastSeen: Date.now(),
       isHumanOverride: false,

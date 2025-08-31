@@ -97,7 +97,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         message,
         connection,
         requestMetadata: {
-          connectionId,
+          connectionId: connectionId!,
           userId: connection.userId,
           timestamp,
         },

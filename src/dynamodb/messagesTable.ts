@@ -2,7 +2,7 @@ import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
-export function createMessagesTable(scope: Construct, retentionDays: number = 90): Table {
+export function createMessagesTable(scope: Construct, _retentionDays: number = 90): Table {
   return new Table(scope, 'MessagesTable', {
     tableName: 'kxgen-chat-messages',
     partitionKey: {
