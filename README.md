@@ -130,7 +130,7 @@ erDiagram
         string text
         string sender
         string status
-        object metadata
+        json metadata
         number expiresAt
     }
     
@@ -142,7 +142,7 @@ erDiagram
         boolean isHumanOverride
     }
     
-    MESSAGES ||--o{ CONNECTIONS : "threadId"
+    MESSAGES ||--o{ CONNECTIONS : threadId
 ```
 
 ### AWS Infrastructure Components
